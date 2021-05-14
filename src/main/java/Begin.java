@@ -1,13 +1,12 @@
 import robocode.AdvancedRobot;
 import robocode.ScannedRobotEvent;
-import static java.lang.Math.toRadians;
 import robocode.util.Utils;
 import java.awt.*;
 import robocode.DeathEvent;
 import java.awt.geom.Point2D;
 import java.util.*;
 
-import static java.lang.Math.signum;
+import static java.lang.Math.*;
 
 public class Begin extends AdvancedRobot {
     private static boolean isAlive = true;
@@ -23,7 +22,18 @@ public class Begin extends AdvancedRobot {
             if(enemyX > -1){
                 final double radarTurn = getRadarTurn();
                 setTurnRadarRightRadians(radarTurn);
+
+                final double bodyTurn = getBodyTurn();
+                setTurnRightRadians(bodyTurn);
+
+                if(getDistanceRemaining() == 0){
+                    final double distance = getDistance();
+                    setAhead(distance);
+                }
             }
+            final double gunTurn  = getGunTurn();
+            setTurnGunRightRadians(gunTurn);
+            setFire(2);
         }
     }
 
@@ -66,5 +76,25 @@ public class Begin extends AdvancedRobot {
         }
    }
 
+   private double getDistance(){
+        return 200-400 * random();
+   }
 
+   private double getBodyTurn(){
+        //вычисление угла поворота
+        final double alphaToMe = angleTo(enemyX, enemyY, getX(), getY());
+        //пеленг противника
+        final double lateralDirection = signum((getVelocity() != 0 ? getVelocity() : 1) * 
+                sin(Utils.normalRelativeAngle(getHeadingRadians() - alphaToMe)));
+        //направление движения
+       final double desiredHeading = Utils.normalAbsoluteAngle(alphaToMe + Math.PI / 2 * lateralDirection);
+       //нормализуем направление по скорости
+       final double normalHeading = getVelocity() >= 0 ? getHeadingRadians() :
+               Utils.normalAbsoluteAngle(getHeadingRadians() * Math.PI);
+       return Utils.normalRelativeAngle(desiredHeading - normalHeading);
+   }
+
+   private double getGunTurn(){
+        return Utils.normalRelativeAngle(angleTo(getX(), getY(), enemyX, enemyY) - getGunHeadingRadians());
+   }
 }
